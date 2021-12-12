@@ -94,6 +94,21 @@ impl Coord {
     }
 }
 
+struct Input {
+    xy: Vec<Coord>,
+    uv: Vec<(usize, usize)>,
+    l: Vec<usize>,
+}
+impl Input {
+    fn new(xy: Vec<Coord>, uv: Vec<(usize, usize)>) -> Self {
+        Self {
+            xy,
+            uv,
+            l: Vec::with_capacity(M),
+        }
+    }
+}
+
 fn main() {
     let system_time = SystemTime::now();
     let mut rng = thread_rng();
@@ -115,9 +130,12 @@ fn main() {
         uv.push((u, v));
     }
 
+    let mut input = Input::new(xy, uv);
+
     // main loop
     for i in 0..M {
         let l: usize = sc.read();
+        input.l.push(l);
 
         // output
         println!("{}", 1);
