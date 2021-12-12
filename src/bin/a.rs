@@ -199,7 +199,8 @@ fn main() {
     let mut uf = UnionFind::new();
     let mut graph = Graph::new(&input);
     let mut edge_num = 0;
-    let mut kruskal = Kruskal::new(&input, UnionFind::new(), 0);
+    let mut kruskal = Kruskal::new(&input, UnionFind::new(), 0, &vec![]);
+    eprintln!("{}", kruskal.dist);
 
     // main loop
     for mi in 0..M {
@@ -208,9 +209,6 @@ fn main() {
 
         let (u, v) = input.uv[mi];
 
-        // // 2*di 以下が対象
-        let di = input.xy[u].specific_distance(&input.xy[v]);
-
         graph.del_edge(u, v);
         // ここを外すと確定で非連結になってしまう場合
         if !graph.is_connected() {
@@ -218,6 +216,9 @@ fn main() {
             edge_num += 1;
         } else {
             if kruskal.d[mi] {
+                // // 2*di 以下が対象
+                let di = input.xy[u].specific_distance(&input.xy[v]);
+
                 let degree_min = graph.edges[u].len().min(graph.edges[v].len());
                 // let vol = 1.0 + 2.0 * (1.0 / degree_min as f64);
                 let vol = 2.5; // TODO: 調整
@@ -225,11 +226,16 @@ fn main() {
                     connect(u, v, &mut graph, &mut uf);
                     edge_num += 1;
                 } else {
-                    let new_kruskal = Kruskal::new(&input, uf.clone(), mi);
+                    let new_kruskal = Kruskal::new(&input, uf.clone(), mi, &kruskal.d);
 
                     // TODO: 良くなりそうな場合だけ採択
-                    kruskal = new_kruskal;
-                    println!("{}", 0);
+                    if new_kruskal.dist <= kruskal.dist + (l - di) {
+                        kruskal = new_kruskal;
+                        println!("{}", 0);
+                    } else {
+                        connect(u, v, &mut graph, &mut uf);
+                        edge_num += 1;
+                    }
                 }
             } else {
                 println!("{}", 0);
@@ -243,12 +249,14 @@ fn main() {
 
 struct Kruskal {
     d: Vec<bool>, // trueが採択
+    dist: usize,
 }
 impl Kruskal {
     fn new(
         input: &Input,
         mut uf: UnionFind, // 暫定uf
         mi: usize,         // このmi以降で考える
+        old_d: &Vec<bool>,
     ) -> Self {
         let mut vs = Vec::with_capacity(M);
         for i in mi..M {
@@ -262,14 +270,27 @@ impl Kruskal {
         let mut d = vec![false; M];
         vs.sort();
 
-        for (dist, i, u, v) in vs {
+        for (_, i, u, v) in vs {
             if !uf.is_connect(u, v) {
                 uf.connect(u, v);
                 d[i] = true;
             }
         }
 
-        Self { d }
+        for i in 0..mi {
+            d[i] = old_d[i];
+        }
+
+        let mut dist = 0;
+        for i in 0..M {
+            if d[i] {
+                let (u, v) = input.uv[i];
+                let di = input.xy[u].specific_distance(&input.xy[v]);
+                dist += di;
+            }
+        }
+
+        Self { d, dist: dist * 2 }
     }
 }
 
