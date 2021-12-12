@@ -102,8 +102,6 @@ fn main() {
     let (r, w) = (std::io::stdin(), std::io::stdout());
     let mut sc = IO::new(r.lock(), w.lock());
 
-    let _: usize = sc.read();
-
     let mut xy = Vec::with_capacity(N);
     let mut uv = Vec::with_capacity(M);
     for _ in 0..N {
