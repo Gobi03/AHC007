@@ -2,16 +2,16 @@
 use proconio::marker::{Chars, Isize1, Usize1};
 
 #[allow(unused_imports)]
-use std::cmp::*;
-#[allow(unused_imports)]
-use std::collections::*;
-
-#[allow(unused_imports)]
 use rand::rngs::ThreadRng;
 #[allow(unused_imports)]
 use rand::seq::SliceRandom;
 #[allow(unused_imports)]
 use rand::{thread_rng, Rng};
+
+#[allow(unused_imports)]
+use std::cmp::*;
+#[allow(unused_imports)]
+use std::collections::*;
 #[allow(unused_imports)]
 use std::io::Write;
 use std::time::SystemTime;
@@ -216,7 +216,8 @@ fn main() {
             connect(u, v, &mut graph, &mut uf);
             edge_num += 1;
         } else {
-            let vol = 1.5 + 1.5 * f64::exp((mi as f64 - (M - 1) as f64) / 50.0);
+            let degree_min = graph.edges[u].len().min(graph.edges[v].len());
+            let vol = 1.0 + 2.0 * (1.0 / degree_min as f64);
             if !uf.is_connect(u, v) && l <= (di as f64 * vol) as usize {
                 connect(u, v, &mut graph, &mut uf);
                 edge_num += 1;
