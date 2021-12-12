@@ -1,6 +1,5 @@
 #[allow(unused_imports)]
 use proconio::marker::{Chars, Isize1, Usize1};
-use proconio::{fastout, input};
 
 #[allow(unused_imports)]
 use std::cmp::*;
@@ -117,9 +116,59 @@ impl Input {
     }
 }
 
+struct Graph {
+    edges: Vec<Vec<usize>>,
+    dp: Vec<usize>,
+    dp_num: usize, // この値より大きい数はdpのdone値に使われたことがない
+}
+impl Graph {
+    fn new(input: &Input) -> Self {
+        let mut edges = vec![vec![]; N];
+        for &(u, v) in &input.uv {
+            edges[u].push(v);
+            edges[v].push(u);
+        }
+
+        Self {
+            edges,
+            dp: vec![0; N],
+            dp_num: 0,
+        }
+    }
+
+    fn is_connected(&mut self) -> bool {
+        let mut q: VecDeque<usize> = VecDeque::new();
+        q.push_back(0);
+        self.dp_num += 1;
+        self.dp[0] = self.dp_num;
+        let mut cnt = 1;
+        while !q.is_empty() {
+            let now = q.pop_front().unwrap();
+            for &e in &self.edges[now] {
+                if self.dp[e] != self.dp_num {
+                    cnt += 1;
+                    self.dp[e] = self.dp_num;
+                    q.push_back(e);
+                }
+            }
+        }
+
+        cnt == N
+    }
+
+    fn del_edge(&mut self, u: usize, v: usize) {
+        self.edges[u].retain(|e| *e != v);
+        self.edges[v].retain(|e| *e != u);
+    }
+    fn add_edge(&mut self, u: usize, v: usize) {
+        self.edges[u].push(v);
+        self.edges[v].push(u);
+    }
+}
+
 fn main() {
     let system_time = SystemTime::now();
-    let mut rng = thread_rng();
+    let mut _rng = thread_rng();
 
     // input
     let (r, w) = (std::io::stdin(), std::io::stdout());
@@ -142,6 +191,7 @@ fn main() {
 
     // main
     let mut uf = UnionFind::new();
+    let mut graph = Graph::new(&input);
 
     // main loop
     for i in 0..M {
@@ -151,11 +201,21 @@ fn main() {
         let (u, v) = input.uv[i];
 
         // 2*di 以下が対象
-        if !uf.is_connect(u, v) && l <= input.xy[u].specific_distance(&input.xy[v]) * 2 {
+        let di = input.xy[u].specific_distance(&input.xy[v]);
+
+        graph.del_edge(u, v);
+        if !graph.is_connected() {
             println!("{}", 1);
+            graph.add_edge(u, v);
             uf.connect(u, v);
         } else {
-            println!("{}", 0);
+            if !uf.is_connect(u, v) && l <= di * 2 {
+                println!("{}", 1);
+                graph.add_edge(u, v);
+                uf.connect(u, v);
+            } else {
+                println!("{}", 0);
+            }
         }
     }
 
