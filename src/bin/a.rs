@@ -166,6 +166,12 @@ impl Graph {
     }
 }
 
+fn connect(u: usize, v: usize, graph: &mut Graph, uf: &mut UnionFind) {
+    println!("{}", 1);
+    graph.add_edge(u, v);
+    uf.connect(u, v);
+}
+
 fn main() {
     let system_time = SystemTime::now();
     let mut _rng = thread_rng();
@@ -206,15 +212,11 @@ fn main() {
 
         graph.del_edge(u, v);
         if !graph.is_connected() {
-            println!("{}", 1);
-            graph.add_edge(u, v);
-            uf.connect(u, v);
+            connect(u, v, &mut graph, &mut uf);
             edge_num += 1;
         } else {
             if !uf.is_connect(u, v) && l <= di * 1 {
-                println!("{}", 1);
-                graph.add_edge(u, v);
-                uf.connect(u, v);
+                connect(u, v, &mut graph, &mut uf);
                 edge_num += 1;
             } else {
                 println!("{}", 0);
