@@ -199,6 +199,7 @@ fn main() {
     let mut uf = UnionFind::new();
     let mut graph = Graph::new(&input);
     let mut edge_num = 0;
+    let kruskal = Kruskal::new(&input);
 
     // main loop
     for mi in 0..M {
@@ -207,28 +208,61 @@ fn main() {
 
         let (u, v) = input.uv[mi];
 
-        // 2*di 以下が対象
-        let di = input.xy[u].specific_distance(&input.xy[v]);
-
-        graph.del_edge(u, v);
-        // ここを外すと確定で非連結になってしまう場合
-        if !graph.is_connected() {
-            connect(u, v, &mut graph, &mut uf);
-            edge_num += 1;
+        if kruskal.d[mi] {
+            println!("{}", 1);
         } else {
-            let degree_min = graph.edges[u].len().min(graph.edges[v].len());
-            let vol = 1.0 + 2.0 * (1.0 / degree_min as f64);
-            if !uf.is_connect(u, v) && l <= (di as f64 * vol) as usize {
-                connect(u, v, &mut graph, &mut uf);
-                edge_num += 1;
-            } else {
-                println!("{}", 0);
-            }
+            println!("{}", 0);
         }
+
+        // // 2*di 以下が対象
+        // let di = input.xy[u].specific_distance(&input.xy[v]);
+
+        // graph.del_edge(u, v);
+        // // ここを外すと確定で非連結になってしまう場合
+        // if !graph.is_connected() {
+        //     connect(u, v, &mut graph, &mut uf);
+        //     edge_num += 1;
+        // } else {
+        //     let degree_min = graph.edges[u].len().min(graph.edges[v].len());
+        //     let vol = 1.0 + 2.0 * (1.0 / degree_min as f64);
+        //     if !uf.is_connect(u, v) && l <= (di as f64 * vol) as usize {
+        //         connect(u, v, &mut graph, &mut uf);
+        //         edge_num += 1;
+        //     } else {
+        //         println!("{}", 0);
+        //     }
+        // }
     }
 
     eprintln!("{}", edge_num);
     eprintln!("{}ms", system_time.elapsed().unwrap().as_millis());
+}
+
+struct Kruskal {
+    d: Vec<bool>, // trueが採択
+}
+impl Kruskal {
+    fn new(input: &Input) -> Self {
+        let mut vs = Vec::with_capacity(M);
+        for (i, &(u, v)) in input.uv.iter().enumerate() {
+            let di = input.xy[u].specific_distance(&input.xy[v]);
+            vs.push((di, i, u, v))
+        }
+
+        let mut d = vec![false; M];
+        vs.sort();
+        vs.reverse();
+
+        let mut uf = UnionFind::new();
+        for (dist, i, u, v) in vs {
+            if !uf.is_connect(u, v) {
+                uf.connect(u, v);
+                d[i] = true;
+            }
+        }
+
+        Self { d }
+    }
 }
 
 struct UnionFind {
