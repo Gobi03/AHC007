@@ -199,7 +199,7 @@ fn main() {
     let mut uf = UnionFind::new();
     let mut graph = Graph::new(&input);
     let mut edge_num = 0;
-    let kruskal = Kruskal::new(&input, UnionFind::new(), 0);
+    let mut kruskal = Kruskal::new(&input, UnionFind::new(), 0);
 
     // main loop
     for mi in 0..M {
@@ -208,31 +208,33 @@ fn main() {
 
         let (u, v) = input.uv[mi];
 
-        if kruskal.d[mi] {
-            println!("{}", 1);
+        // // 2*di 以下が対象
+        let di = input.xy[u].specific_distance(&input.xy[v]);
+
+        graph.del_edge(u, v);
+        // ここを外すと確定で非連結になってしまう場合
+        if !graph.is_connected() {
+            connect(u, v, &mut graph, &mut uf);
             edge_num += 1;
         } else {
-            println!("{}", 0);
+            if kruskal.d[mi] {
+                let degree_min = graph.edges[u].len().min(graph.edges[v].len());
+                // let vol = 1.0 + 2.0 * (1.0 / degree_min as f64);
+                let vol = 2.5; // TODO: 調整
+                if l <= (di as f64 * vol) as usize {
+                    connect(u, v, &mut graph, &mut uf);
+                    edge_num += 1;
+                } else {
+                    let new_kruskal = Kruskal::new(&input, uf.clone(), mi);
+
+                    // TODO: 良くなりそうな場合だけ採択
+                    kruskal = new_kruskal;
+                    println!("{}", 0);
+                }
+            } else {
+                println!("{}", 0);
+            }
         }
-
-        // // 2*di 以下が対象
-        // let di = input.xy[u].specific_distance(&input.xy[v]);
-
-        // graph.del_edge(u, v);
-        // // ここを外すと確定で非連結になってしまう場合
-        // if !graph.is_connected() {
-        //     connect(u, v, &mut graph, &mut uf);
-        //     edge_num += 1;
-        // } else {
-        //     let degree_min = graph.edges[u].len().min(graph.edges[v].len());
-        //     let vol = 1.0 + 2.0 * (1.0 / degree_min as f64);
-        //     if !uf.is_connect(u, v) && l <= (di as f64 * vol) as usize {
-        //         connect(u, v, &mut graph, &mut uf);
-        //         edge_num += 1;
-        //     } else {
-        //         println!("{}", 0);
-        //     }
-        // }
     }
 
     eprintln!("{}", edge_num);
@@ -271,6 +273,7 @@ impl Kruskal {
     }
 }
 
+#[derive(Clone)]
 struct UnionFind {
     uni: Vec<isize>, // 根であれば *そのグループの要素数(負)* が、子であれば親の番号が入る。
 }
