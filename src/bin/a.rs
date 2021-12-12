@@ -201,11 +201,11 @@ fn main() {
     let mut edge_num = 0;
 
     // main loop
-    for i in 0..M {
+    for mi in 0..M {
         let l: usize = sc.read();
         input.l.push(l);
 
-        let (u, v) = input.uv[i];
+        let (u, v) = input.uv[mi];
 
         // 2*di 以下が対象
         let di = input.xy[u].specific_distance(&input.xy[v]);
@@ -215,7 +215,8 @@ fn main() {
             connect(u, v, &mut graph, &mut uf);
             edge_num += 1;
         } else {
-            if !uf.is_connect(u, v) && l <= di * 1 {
+            let vol = 1.0 + 2.0 * f64::exp((mi as f64 - (M - 1) as f64) / 1000.0);
+            if !uf.is_connect(u, v) && l <= (di as f64 * vol) as usize {
                 connect(u, v, &mut graph, &mut uf);
                 edge_num += 1;
             } else {
@@ -290,7 +291,6 @@ impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
         IO(r, std::io::BufWriter::new(w))
     }
     pub fn write<S: ToString>(&mut self, s: S) {
-        use std::io::Write;
         self.1.write(s.to_string().as_bytes()).unwrap();
     }
     pub fn read<T: std::str::FromStr>(&mut self) -> T {
