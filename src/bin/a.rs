@@ -219,7 +219,6 @@ fn main() {
                 // // 2*di 以下が対象
                 let di = input.xy[u].specific_distance(&input.xy[v]);
 
-                let degree_min = graph.edges[u].len().min(graph.edges[v].len());
                 // let vol = 1.0 + 2.0 * (1.0 / degree_min as f64);
                 let vol = 2.5; // TODO: 調整
                 if l <= (di as f64 * vol) as usize {
@@ -229,7 +228,7 @@ fn main() {
                     let new_kruskal = Kruskal::new(&input, uf.clone(), mi, &kruskal.d);
 
                     // TODO: 良くなりそうな場合だけ採択
-                    if new_kruskal.dist <= kruskal.dist + (l - di) {
+                    if new_kruskal.dist <= kruskal.dist + (l - di * 2) {
                         kruskal = new_kruskal;
                         println!("{}", 0);
                     } else {
@@ -238,7 +237,28 @@ fn main() {
                     }
                 }
             } else {
-                println!("{}", 0);
+                // TODO: 思ったより良い小ささだったら
+                // // 2*di 以下が対象
+                let di = input.xy[u].specific_distance(&input.xy[v]);
+
+                // let vol = 1.0 + 2.0 * (1.0 / degree_min as f64);
+                let vol = 1.5; // TODO: 調整
+                if !uf.is_connect(u, v) && l <= (di as f64 * vol) as usize {
+                    let mut new_uf = uf.clone();
+                    new_uf.connect(u, v);
+                    let mut old_d = kruskal.d.clone();
+                    old_d[mi] = true;
+                    let new_kruskal = Kruskal::new(&input, new_uf, mi, &old_d);
+                    if new_kruskal.dist < kruskal.dist {
+                        kruskal = new_kruskal;
+                        connect(u, v, &mut graph, &mut uf);
+                        edge_num += 1;
+                    } else {
+                        println!("{}", 0);
+                    }
+                } else {
+                    println!("{}", 0);
+                }
             }
         }
     }
