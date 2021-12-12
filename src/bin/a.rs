@@ -215,7 +215,7 @@ fn main() {
             connect(u, v, &mut graph, &mut uf);
             edge_num += 1;
         } else {
-            let vol = 1.0 + 2.0 * f64::exp((mi as f64 - (M - 1) as f64) / 1000.0);
+            let vol = 1.5 + 1.5 * f64::exp((mi as f64 - (M - 1) as f64) / 50.0);
             if !uf.is_connect(u, v) && l <= (di as f64 * vol) as usize {
                 connect(u, v, &mut graph, &mut uf);
                 edge_num += 1;
