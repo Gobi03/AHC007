@@ -192,6 +192,7 @@ fn main() {
     // main
     let mut uf = UnionFind::new();
     let mut graph = Graph::new(&input);
+    let mut edge_num = 0;
 
     // main loop
     for i in 0..M {
@@ -208,17 +209,20 @@ fn main() {
             println!("{}", 1);
             graph.add_edge(u, v);
             uf.connect(u, v);
+            edge_num += 1;
         } else {
-            if !uf.is_connect(u, v) && l <= di * 2 {
+            if !uf.is_connect(u, v) && l <= di * 1 {
                 println!("{}", 1);
                 graph.add_edge(u, v);
                 uf.connect(u, v);
+                edge_num += 1;
             } else {
                 println!("{}", 0);
             }
         }
     }
 
+    eprintln!("{}", edge_num);
     eprintln!("{}ms", system_time.elapsed().unwrap().as_millis());
 }
 
