@@ -199,7 +199,7 @@ fn main() {
     let mut uf = UnionFind::new();
     let mut graph = Graph::new(&input);
     let mut edge_num = 0;
-    let kruskal = Kruskal::new(&input);
+    let kruskal = Kruskal::new(&input, UnionFind::new(), 0);
 
     // main loop
     for mi in 0..M {
@@ -210,6 +210,7 @@ fn main() {
 
         if kruskal.d[mi] {
             println!("{}", 1);
+            edge_num += 1;
         } else {
             println!("{}", 0);
         }
@@ -242,7 +243,11 @@ struct Kruskal {
     d: Vec<bool>, // trueが採択
 }
 impl Kruskal {
-    fn new(input: &Input) -> Self {
+    fn new(
+        input: &Input,
+        mut uf: UnionFind, // 暫定uf
+        mi: usize,         // このmi以降で考える
+    ) -> Self {
         let mut vs = Vec::with_capacity(M);
         for (i, &(u, v)) in input.uv.iter().enumerate() {
             let di = input.xy[u].specific_distance(&input.xy[v]);
@@ -251,9 +256,7 @@ impl Kruskal {
 
         let mut d = vec![false; M];
         vs.sort();
-        vs.reverse();
 
-        let mut uf = UnionFind::new();
         for (dist, i, u, v) in vs {
             if !uf.is_connect(u, v) {
                 uf.connect(u, v);
