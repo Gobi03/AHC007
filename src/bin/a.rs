@@ -211,6 +211,7 @@ fn main() {
         let di = input.xy[u].specific_distance(&input.xy[v]);
 
         graph.del_edge(u, v);
+        // ここを外すと確定で非連結になってしまう場合
         if !graph.is_connected() {
             connect(u, v, &mut graph, &mut uf);
             edge_num += 1;
