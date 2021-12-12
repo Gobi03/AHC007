@@ -249,9 +249,12 @@ impl Kruskal {
         mi: usize,         // このmi以降で考える
     ) -> Self {
         let mut vs = Vec::with_capacity(M);
-        for (i, &(u, v)) in input.uv.iter().enumerate() {
-            let di = input.xy[u].specific_distance(&input.xy[v]);
-            vs.push((di, i, u, v))
+        for i in mi..M {
+            let (u, v) = input.uv[i];
+            if !uf.is_connect(u, v) {
+                let di = input.xy[u].specific_distance(&input.xy[v]);
+                vs.push((di, i, u, v))
+            }
         }
 
         let mut d = vec![false; M];
