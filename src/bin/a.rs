@@ -53,8 +53,16 @@ impl Coord {
     }
 
     // マンハッタン距離
-    fn distance(&self, that: &Self) -> isize {
-        (self.x - that.x).abs() + (self.y - that.y).abs()
+    // fn specific_distance(&self, that: &Self) -> isize {
+    //     (self.x - that.x).abs() + (self.y - that.y).abs()
+    // }
+
+    // 問題用のユークリッド距離(di)
+    fn specific_distance(&self, that: &Self) -> usize {
+        let xx = (self.x as f64 - that.x as f64).powi(2);
+        let yy = (self.y as f64 - that.y as f64).powi(2);
+
+        (xx + yy).sqrt().round() as usize
     }
 
     fn mk_4dir(&self) -> Vec<Self> {
@@ -141,7 +149,9 @@ fn main() {
         input.l.push(l);
 
         let (u, v) = input.uv[i];
-        if !uf.is_connect(u, v) {
+
+        // 2*di 以下が対象
+        if !uf.is_connect(u, v) && l <= input.xy[u].specific_distance(&input.xy[v]) * 2 {
             println!("{}", 1);
             uf.connect(u, v);
         } else {
