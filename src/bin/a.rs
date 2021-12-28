@@ -139,6 +139,18 @@ fn main() {
 
     let mut input = Input::new(xy, uv);
 
+    // main
+    let mut uf = kruskal::UnionFind::new(N);
+
+    // クラスカル用にデータ構造整える
+    let mut edges = vec![];
+    for i in 0..M {
+        let (u, v) = input.uv[i];
+        let di = input.xy[u].specific_distance(&input.xy[v]);
+
+        edges.push((2 * di, (u, v))); // TODO: ここが1.8だといい感じらしい
+    }
+
     // main loop
     for mi in 0..M {
         // エッジmiのコスト
@@ -146,6 +158,20 @@ fn main() {
         input.l.push(l);
 
         let (u, v) = input.uv[mi];
+        edges[0] = (l, (u, v));
+
+        // MST
+        let res = kruskal::calc(&edges, uf.clone());
+
+        // TODO: 足す場合は、kruscalのUnionFindに追加
+        if res.contains(&(u, v)) {
+            uf.connect(u, v);
+            println!("1");
+        } else {
+            println!("0");
+        }
+
+        edges.remove(0);
     }
 
     eprintln!("{}ms", system_time.elapsed().unwrap().as_millis());
@@ -158,11 +184,10 @@ mod kruskal {
 
     // MSTを成すエッジ列を返す
     pub fn calc(
-        n: usize,                           // ノード数
-        edges: &Vec<(usize, usize, usize)>, // (cost, s, t): s-t を繋ぐエッジとそのcost
+        edges: &Vec<(usize, (usize, usize))>, // (cost, s, t): s-t を繋ぐエッジとそのcost
+        mut uf: UnionFind,
     ) -> Vec<(usize, usize)> {
-        let mut uf = UnionFind::new(n);
-        let mut res: Vec<(usize, usize)> = Vec::with_capacity(n - 1);
+        let mut res: Vec<(usize, usize)> = Vec::with_capacity(super::N - 1);
 
         let mut pq = BinaryHeap::new();
 
@@ -171,7 +196,7 @@ mod kruskal {
         }
 
         while !pq.is_empty() {
-            let Reverse((_, s, t)) = pq.pop().unwrap();
+            let Reverse((_, (s, t))) = pq.pop().unwrap();
             if !uf.is_connect(s, t) {
                 uf.connect(s, t);
                 res.push((s, t));
@@ -181,12 +206,13 @@ mod kruskal {
         res
     }
 
-    struct UnionFind {
+    #[derive(Clone)]
+    pub struct UnionFind {
         uni: Vec<isize>, // 根であれば *そのグループの要素数(負)* が、子であれば親の番号が入る。
     }
     #[allow(dead_code)]
     impl UnionFind {
-        fn new(n: usize) -> Self {
+        pub fn new(n: usize) -> Self {
             UnionFind { uni: vec![-1; n] }
         }
         // 頂点 v の所属するグループを調べる
@@ -199,7 +225,7 @@ mod kruskal {
             }
         }
         // 頂点 a と頂点 b を繋ぐ。元々同じグループのとき　false を返す
-        fn connect(&mut self, a: usize, b: usize) -> bool {
+        pub fn connect(&mut self, a: usize, b: usize) -> bool {
             let mut root_a = self.root(a) as usize;
             let mut root_b = self.root(b) as usize;
             if root_a == root_b {
