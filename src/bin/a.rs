@@ -116,62 +116,6 @@ impl Input {
     }
 }
 
-struct Graph {
-    edges: Vec<Vec<usize>>,
-    dp: Vec<usize>,
-    dp_num: usize, // この値より大きい数はdpのdone値に使われたことがない
-}
-impl Graph {
-    fn new(input: &Input) -> Self {
-        let mut edges = vec![vec![]; N];
-        for &(u, v) in &input.uv {
-            edges[u].push(v);
-            edges[v].push(u);
-        }
-
-        Self {
-            edges,
-            dp: vec![0; N],
-            dp_num: 0,
-        }
-    }
-
-    fn is_connected(&mut self) -> bool {
-        let mut q: VecDeque<usize> = VecDeque::new();
-        q.push_back(0);
-        self.dp_num += 1;
-        self.dp[0] = self.dp_num;
-        let mut cnt = 1;
-        while !q.is_empty() {
-            let now = q.pop_front().unwrap();
-            for &e in &self.edges[now] {
-                if self.dp[e] != self.dp_num {
-                    cnt += 1;
-                    self.dp[e] = self.dp_num;
-                    q.push_back(e);
-                }
-            }
-        }
-
-        cnt == N
-    }
-
-    fn del_edge(&mut self, u: usize, v: usize) {
-        self.edges[u].retain(|e| *e != v);
-        self.edges[v].retain(|e| *e != u);
-    }
-    fn add_edge(&mut self, u: usize, v: usize) {
-        self.edges[u].push(v);
-        self.edges[v].push(u);
-    }
-}
-
-fn connect(u: usize, v: usize, graph: &mut Graph, uf: &mut UnionFind) {
-    println!("{}", 1);
-    graph.add_edge(u, v);
-    uf.connect(u, v);
-}
-
 fn main() {
     let system_time = SystemTime::now();
     let mut _rng = thread_rng();
@@ -195,178 +139,92 @@ fn main() {
 
     let mut input = Input::new(xy, uv);
 
-    // main
-    let mut uf = UnionFind::new();
-    let mut graph = Graph::new(&input);
-    let mut edge_num = 0;
-    let mut kruskal = Kruskal::new(&input, UnionFind::new(), 0, &vec![]);
-    eprintln!("{}", kruskal.dist);
-
     // main loop
     for mi in 0..M {
+        // エッジmiのコスト
         let l: usize = sc.read();
         input.l.push(l);
 
         let (u, v) = input.uv[mi];
-
-        graph.del_edge(u, v);
-        // ここを外すと確定で非連結になってしまう場合
-        if !graph.is_connected() {
-            connect(u, v, &mut graph, &mut uf);
-            edge_num += 1;
-        } else {
-            if kruskal.d[mi] {
-                // // 2*di 以下が対象
-                let di = input.xy[u].specific_distance(&input.xy[v]);
-
-                // let vol = 1.0 + 2.0 * (1.0 / degree_min as f64);
-                let vol = 2.5; // TODO: 調整
-                if l <= (di as f64 * vol) as usize {
-                    connect(u, v, &mut graph, &mut uf);
-                    edge_num += 1;
-                } else {
-                    let new_kruskal = Kruskal::new(&input, uf.clone(), mi, &kruskal.d);
-
-                    // TODO: 良くなりそうな場合だけ採択
-                    if new_kruskal.dist <= kruskal.dist + (l - di * 2) {
-                        kruskal = new_kruskal;
-                        println!("{}", 0);
-                    } else {
-                        connect(u, v, &mut graph, &mut uf);
-                        edge_num += 1;
-                    }
-                }
-            } else {
-                // TODO: 思ったより良い小ささだったら
-                // // 2*di 以下が対象
-                let di = input.xy[u].specific_distance(&input.xy[v]);
-
-                // let vol = 1.0 + 2.0 * (1.0 / degree_min as f64);
-                let vol = 1.5; // TODO: 調整
-                if !uf.is_connect(u, v) && l <= (di as f64 * vol) as usize {
-                    let mut new_uf = uf.clone();
-                    new_uf.connect(u, v);
-                    let mut old_d = kruskal.d.clone();
-                    old_d[mi] = true;
-                    let new_kruskal = Kruskal::new(&input, new_uf, mi, &old_d);
-                    if new_kruskal.dist < kruskal.dist {
-                        kruskal = new_kruskal;
-                        connect(u, v, &mut graph, &mut uf);
-                        edge_num += 1;
-                    } else {
-                        println!("{}", 0);
-                    }
-                } else {
-                    println!("{}", 0);
-                }
-            }
-        }
     }
 
-    eprintln!("{}", edge_num);
     eprintln!("{}ms", system_time.elapsed().unwrap().as_millis());
 }
 
-struct Kruskal {
-    d: Vec<bool>, // trueが採択
-    dist: usize,
-}
-impl Kruskal {
-    fn new(
-        input: &Input,
-        mut uf: UnionFind, // 暫定uf
-        mi: usize,         // このmi以降で考える
-        old_d: &Vec<bool>,
-    ) -> Self {
-        let mut vs = Vec::with_capacity(M);
-        for i in mi..M {
-            let (u, v) = input.uv[i];
-            if !uf.is_connect(u, v) {
-                let di = input.xy[u].specific_distance(&input.xy[v]);
-                vs.push((di, i, u, v))
+// 重み付き連結無向グラフが対象(0-based index)
+mod kruskal {
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+
+    // MSTを成すエッジ列を返す
+    pub fn calc(
+        n: usize,                           // ノード数
+        edges: &Vec<(usize, usize, usize)>, // (cost, s, t): s-t を繋ぐエッジとそのcost
+    ) -> Vec<(usize, usize)> {
+        let mut uf = UnionFind::new(n);
+        let mut res: Vec<(usize, usize)> = Vec::with_capacity(n - 1);
+
+        let mut pq = BinaryHeap::new();
+
+        for e in edges {
+            pq.push(Reverse(e.clone()));
+        }
+
+        while !pq.is_empty() {
+            let Reverse((_, s, t)) = pq.pop().unwrap();
+            if !uf.is_connect(s, t) {
+                uf.connect(s, t);
+                res.push((s, t));
             }
         }
 
-        let mut d = vec![false; M];
-        vs.sort();
+        res
+    }
 
-        for (_, i, u, v) in vs {
-            if !uf.is_connect(u, v) {
-                uf.connect(u, v);
-                d[i] = true;
+    struct UnionFind {
+        uni: Vec<isize>, // 根であれば *そのグループの要素数(負)* が、子であれば親の番号が入る。
+    }
+    #[allow(dead_code)]
+    impl UnionFind {
+        fn new(n: usize) -> Self {
+            UnionFind { uni: vec![-1; n] }
+        }
+        // 頂点 v の所属するグループを調べる
+        fn root(&mut self, v: usize) -> usize {
+            if self.uni[v] < 0 {
+                v
+            } else {
+                self.uni[v] = self.root(self.uni[v] as usize) as isize;
+                self.uni[v] as usize
             }
         }
-
-        for i in 0..mi {
-            d[i] = old_d[i];
-        }
-
-        let mut dist = 0;
-        for i in 0..M {
-            if d[i] {
-                let (u, v) = input.uv[i];
-                let di = input.xy[u].specific_distance(&input.xy[v]);
-                dist += di;
+        // 頂点 a と頂点 b を繋ぐ。元々同じグループのとき　false を返す
+        fn connect(&mut self, a: usize, b: usize) -> bool {
+            let mut root_a = self.root(a) as usize;
+            let mut root_b = self.root(b) as usize;
+            if root_a == root_b {
+                return false;
             }
+            // a 側が大きいグループになるようにスワップ
+            if self.uni[root_a] > self.uni[root_b] {
+                root_a ^= root_b;
+                root_b ^= root_a;
+                root_a ^= root_b;
+            }
+            // root_a と root_b を結合し、root_b の親を root_a とする
+            self.uni[root_a] += self.uni[root_b];
+            self.uni[root_b] = root_a as isize;
+            return true;
         }
-
-        Self { d, dist: dist * 2 }
-    }
-}
-
-#[derive(Clone)]
-struct UnionFind {
-    uni: Vec<isize>, // 根であれば *そのグループの要素数(負)* が、子であれば親の番号が入る。
-}
-
-#[allow(dead_code)]
-impl UnionFind {
-    fn new() -> Self {
-        UnionFind { uni: vec![-1; N] }
-    }
-
-    // 頂点 v の所属するグループを調べる
-    fn root(&mut self, v: usize) -> usize {
-        if self.uni[v] < 0 {
-            v
-        } else {
-            self.uni[v] = self.root(self.uni[v] as usize) as isize;
-            self.uni[v] as usize
+        // 頂点 a, b が同じグループであるかを調べる
+        fn is_connect(&mut self, a: usize, b: usize) -> bool {
+            self.root(a) == self.root(b)
         }
-    }
-
-    // 頂点 a と頂点 b を繋ぐ。元々同じグループのとき　false を返す
-    fn connect(&mut self, a: usize, b: usize) -> bool {
-        let mut root_a = self.root(a) as usize;
-        let mut root_b = self.root(b) as usize;
-
-        if root_a == root_b {
-            return false;
+        // 頂点 v を含むグループの頂点数を調べる
+        fn size(&mut self, v: usize) -> usize {
+            let root = self.root(v);
+            self.uni[root].abs() as usize
         }
-
-        // a 側が大きいグループになるようにスワップ
-        if self.uni[root_a] > self.uni[root_b] {
-            root_a ^= root_b;
-            root_b ^= root_a;
-            root_a ^= root_b;
-        }
-
-        // root_a と root_b を結合し、root_b の親を root_a とする
-        self.uni[root_a] += self.uni[root_b];
-        self.uni[root_b] = root_a as isize;
-
-        return true;
-    }
-
-    // 頂点 a, b が同じグループであるかを調べる
-    fn is_connect(&mut self, a: usize, b: usize) -> bool {
-        self.root(a) == self.root(b)
-    }
-
-    // 頂点 v を含むグループの頂点数を調べる
-    fn size(&mut self, v: usize) -> usize {
-        let root = self.root(v);
-        self.uni[root].abs() as usize
     }
 }
 
