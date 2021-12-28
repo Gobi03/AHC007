@@ -148,7 +148,7 @@ fn main() {
         let (u, v) = input.uv[i];
         let di = input.xy[u].specific_distance(&input.xy[v]);
 
-        edges.push((2 * di, (u, v))); // TODO: ここが1.8だといい感じらしい
+        edges.push((MinNonNan(1.8 * di as f64), (u, v)));
     }
 
     // main loop
@@ -158,7 +158,7 @@ fn main() {
         input.l.push(l);
 
         let (u, v) = input.uv[mi];
-        edges[0] = (l, (u, v));
+        edges[0] = (MinNonNan(l as f64), (u, v));
 
         // MST
         let res = kruskal::calc(&edges, uf.clone());
@@ -177,6 +177,21 @@ fn main() {
     eprintln!("{}ms", system_time.elapsed().unwrap().as_millis());
 }
 
+#[derive(PartialEq)]
+pub struct MinNonNan(f64);
+
+impl Eq for MinNonNan {}
+impl PartialOrd for MinNonNan {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.0.partial_cmp(&other.0)
+    }
+}
+impl Ord for MinNonNan {
+    fn cmp(&self, other: &MinNonNan) -> Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+
 // 重み付き連結無向グラフが対象(0-based index)
 mod kruskal {
     use std::cmp::Reverse;
@@ -184,7 +199,7 @@ mod kruskal {
 
     // MSTを成すエッジ列を返す
     pub fn calc(
-        edges: &Vec<(usize, (usize, usize))>, // (cost, s, t): s-t を繋ぐエッジとそのcost
+        edges: &Vec<(super::MinNonNan, (usize, usize))>, // (cost, s, t): s-t を繋ぐエッジとそのcost
         mut uf: UnionFind,
     ) -> Vec<(usize, usize)> {
         let mut res: Vec<(usize, usize)> = Vec::with_capacity(super::N - 1);
@@ -196,7 +211,7 @@ mod kruskal {
         }
 
         while !pq.is_empty() {
-            let Reverse((_, (s, t))) = pq.pop().unwrap();
+            let Reverse(&(_, (s, t))) = pq.pop().unwrap();
             if !uf.is_connect(s, t) {
                 uf.connect(s, t);
                 res.push((s, t));
