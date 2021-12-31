@@ -191,7 +191,7 @@ fn main() {
                 }
 
                 // MST
-                let res = kruskal::calc(&edges, uf.clone());
+                let res = kruskal::calc(&edges, (lc, (u, v)), uf.clone());
                 if res.contains(&(u, v)) {
                     agree_cnt += 1;
                 }
@@ -238,6 +238,7 @@ mod kruskal {
     // MSTを成すエッジ列を返す
     pub fn calc(
         edges: &Vec<(super::MinNonNan, (usize, usize), usize)>, // (cost, (s, t), mi): s-t を繋ぐエッジとそのcost
+        now_target_edge: (super::MinNonNan, (usize, usize)),    // (cost, (s, t))
         mut uf: UnionFind,
     ) -> Vec<(usize, usize)> {
         let mut res: Vec<(usize, usize)> = Vec::with_capacity(super::N - 1);
@@ -258,6 +259,9 @@ mod kruskal {
                 if uf.size(s) == N {
                     break;
                 }
+            }
+            if (s, t) == now_target_edge.1 {
+                break;
             }
         }
 
