@@ -163,7 +163,6 @@ fn main() {
 
     // main loop
     // TODO: すでに連結なものは掃除する
-    // TODO: すでに連結なものはやらない
     for mi in 0..M {
         // エッジmiのコスト
         let l: usize = sc.read();
@@ -173,27 +172,29 @@ fn main() {
 
         let (u, v) = input.uv[mi];
 
+        // 各世界線での多数決
         let mut agree_cnt = 0;
-
-        for edges in &mut worlds {
-            // edges の上書き作業
-            edges.retain(|e| e.2 != mi);
-            let mut flag = false;
-            for i in 0..edges.len() {
-                if edges[i].0 >= lc {
-                    edges.insert(i, (lc, (u, v), mi));
-                    flag = true;
-                    break;
+        if !uf.is_connect(u, v) {
+            for edges in &mut worlds {
+                // edges の上書き作業
+                edges.retain(|e| e.2 != mi);
+                let mut flag = false;
+                for i in 0..edges.len() {
+                    if edges[i].0 >= lc {
+                        edges.insert(i, (lc, (u, v), mi));
+                        flag = true;
+                        break;
+                    }
                 }
-            }
-            if !flag {
-                edges.push((lc, (u, v), mi));
-            }
+                if !flag {
+                    edges.push((lc, (u, v), mi));
+                }
 
-            // MST
-            let res = kruskal::calc(&edges, uf.clone());
-            if res.contains(&(u, v)) {
-                agree_cnt += 1;
+                // MST
+                let res = kruskal::calc(&edges, uf.clone());
+                if res.contains(&(u, v)) {
+                    agree_cnt += 1;
+                }
             }
         }
 
@@ -300,7 +301,7 @@ mod kruskal {
             return true;
         }
         // 頂点 a, b が同じグループであるかを調べる
-        fn is_connect(&mut self, a: usize, b: usize) -> bool {
+        pub fn is_connect(&mut self, a: usize, b: usize) -> bool {
             self.root(a) == self.root(b)
         }
         // 頂点 v を含むグループの頂点数を調べる
