@@ -24,6 +24,8 @@ const M: usize = 1995;
 
 const SIDE: usize = 800;
 
+const WORLD_NUM: usize = 9;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct Coord {
     x: isize,
@@ -118,7 +120,7 @@ impl Input {
 
 fn main() {
     let system_time = SystemTime::now();
-    let mut _rng = thread_rng();
+    let mut rng = thread_rng();
 
     // input
     let (r, w) = (std::io::stdin(), std::io::stdout());
@@ -143,36 +145,50 @@ fn main() {
     let mut uf = kruskal::UnionFind::new(N);
 
     // クラスカル用にデータ構造整える
-    // TODO: ここが複数パターン作るようになるべき
-    let mut edges = vec![];
-    for i in 0..M {
-        let (u, v) = input.uv[i];
-        let di = input.xy[u].specific_distance(&input.xy[v]);
-        let estimated_cost = 1.8 * di as f64;
+    let mut worlds = vec![];
+    for _ in 0..WORLD_NUM {
+        let mut edges = Vec::with_capacity(M);
+        for mi in 0..M {
+            let (u, v) = input.uv[mi];
+            let di = input.xy[u].specific_distance(&input.xy[v]);
+            // TODO: 良き範囲に変更
+            let estimated_cost = rng.gen_range(1.0, 3.0) * di as f64;
 
-        edges.push((MinNonNan(estimated_cost), (u, v)));
+            edges.push((MinNonNan(estimated_cost), (u, v)));
+        }
+        worlds.push(edges);
     }
 
     // main loop
+    // TODO: 各世界の多数決をば
     for mi in 0..M {
         // エッジmiのコスト
         let l: usize = sc.read();
         input.l.push(l);
 
         let (u, v) = input.uv[mi];
-        edges[0] = (MinNonNan(l as f64), (u, v));
 
-        // MST
-        let res = kruskal::calc(&edges, uf.clone());
+        let mut agree_cnt = 0;
+        for edges in &mut worlds {
+            edges[0] = (MinNonNan(l as f64), (u, v));
 
-        if res.contains(&(u, v)) {
+            // MST
+            let res = kruskal::calc(&edges, uf.clone());
+            if res.contains(&(u, v)) {
+                agree_cnt += 1;
+            }
+        }
+
+        if agree_cnt > WORLD_NUM / 2 {
             uf.connect(u, v);
             println!("1");
         } else {
             println!("0");
         }
 
-        edges.remove(0);
+        for edges in &mut worlds {
+            edges.remove(0);
+        }
     }
 
     eprintln!("{}ms", system_time.elapsed().unwrap().as_millis());
