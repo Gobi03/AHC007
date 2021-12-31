@@ -24,7 +24,7 @@ const M: usize = 1995;
 
 const SIDE: usize = 800;
 
-const WORLD_NUM: usize = 39;
+const WORLD_NUM: usize = 47;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct Coord {
