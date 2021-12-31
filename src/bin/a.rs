@@ -162,8 +162,14 @@ fn main() {
     }
 
     // main loop
-    // TODO: すでに連結なものは掃除する
     for mi in 0..M {
+        // すでに連結な辺を間引く
+        if mi % 100 == 0 {
+            for edges in &mut worlds {
+                edges.retain(|(_, (u, v), _)| !uf.is_connect(*u, *v));
+            }
+        }
+
         // エッジmiのコスト
         let l: usize = sc.read();
         input.l.push(l);
