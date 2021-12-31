@@ -150,27 +150,43 @@ fn main() {
         let mut edges = Vec::with_capacity(M);
         for mi in 0..M {
             let (u, v) = input.uv[mi];
+
             let di = input.xy[u].specific_distance(&input.xy[v]);
-            // TODO: 良き範囲に変更
             let estimated_cost = rng.gen_range(1.13, 2.87) * di as f64;
 
-            edges.push((MinNonNan(estimated_cost), (u, v)));
+            edges.push((MinNonNan(estimated_cost), (u, v), mi));
         }
+
+        edges.sort();
         worlds.push(edges);
     }
 
     // main loop
-    // TODO: 各世界の多数決をば
     for mi in 0..M {
         // エッジmiのコスト
         let l: usize = sc.read();
         input.l.push(l);
 
+        let lc = MinNonNan(l as f64);
+
         let (u, v) = input.uv[mi];
 
         let mut agree_cnt = 0;
+
         for edges in &mut worlds {
-            edges[0] = (MinNonNan(l as f64), (u, v));
+            // edges の上書き作業
+            edges.retain(|e| e.2 != mi);
+            let mut flag = false;
+            for i in 0..edges.len() {
+                if edges[i].0 >= lc {
+                    edges.insert(i, (lc, (u, v), mi));
+                    flag = true;
+                    break;
+                }
+            }
+            if !flag {
+                edges.push((lc, (u, v), mi));
+            }
 
             // MST
             let res = kruskal::calc(&edges, uf.clone());
@@ -187,14 +203,14 @@ fn main() {
         }
 
         for edges in &mut worlds {
-            edges.remove(0);
+            edges.retain(|e| e.2 != mi);
         }
     }
 
     eprintln!("{}ms", system_time.elapsed().unwrap().as_millis());
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Copy)]
 pub struct MinNonNan(f64);
 
 impl Eq for MinNonNan {}
@@ -216,7 +232,7 @@ mod kruskal {
 
     // MSTを成すエッジ列を返す
     pub fn calc(
-        edges: &Vec<(super::MinNonNan, (usize, usize))>, // (cost, s, t): s-t を繋ぐエッジとそのcost
+        edges: &Vec<(super::MinNonNan, (usize, usize), usize)>, // (cost, (s, t), mi): s-t を繋ぐエッジとそのcost
         mut uf: UnionFind,
     ) -> Vec<(usize, usize)> {
         let mut res: Vec<(usize, usize)> = Vec::with_capacity(super::N - 1);
@@ -227,12 +243,13 @@ mod kruskal {
             pq.push(Reverse(e.clone()));
         }
 
-        while !pq.is_empty() {
-            let Reverse(&(_, (s, t))) = pq.pop().unwrap();
+        for i in 0..edges.len() {
+            let (_, (s, t), _) = edges[i];
             if !uf.is_connect(s, t) {
                 uf.connect(s, t);
                 res.push((s, t));
             }
+            // TODO: 連結になったら打ち切る
         }
 
         res
