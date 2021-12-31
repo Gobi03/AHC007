@@ -143,12 +143,14 @@ fn main() {
     let mut uf = kruskal::UnionFind::new(N);
 
     // クラスカル用にデータ構造整える
+    // TODO: ここが複数パターン作るようになるべき
     let mut edges = vec![];
     for i in 0..M {
         let (u, v) = input.uv[i];
         let di = input.xy[u].specific_distance(&input.xy[v]);
+        let estimated_cost = 1.8 * di as f64;
 
-        edges.push((MinNonNan(1.8 * di as f64), (u, v)));
+        edges.push((MinNonNan(estimated_cost), (u, v)));
     }
 
     // main loop
@@ -163,7 +165,6 @@ fn main() {
         // MST
         let res = kruskal::calc(&edges, uf.clone());
 
-        // TODO: 足す場合は、kruscalのUnionFindに追加
         if res.contains(&(u, v)) {
             uf.connect(u, v);
             println!("1");
