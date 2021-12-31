@@ -24,7 +24,7 @@ const M: usize = 1995;
 
 const SIDE: usize = 800;
 
-const WORLD_NUM: usize = 9;
+const WORLD_NUM: usize = 19;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct Coord {
@@ -162,6 +162,8 @@ fn main() {
     }
 
     // main loop
+    // TODO: すでに連結なものは掃除する
+    // TODO: すでに連結なものはやらない
     for mi in 0..M {
         // エッジmiのコスト
         let l: usize = sc.read();
