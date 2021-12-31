@@ -232,6 +232,8 @@ mod kruskal {
     use std::cmp::Reverse;
     use std::collections::BinaryHeap;
 
+    const N: usize = super::N;
+
     // MSTを成すエッジ列を返す
     pub fn calc(
         edges: &Vec<(super::MinNonNan, (usize, usize), usize)>, // (cost, (s, t), mi): s-t を繋ぐエッジとそのcost
@@ -250,8 +252,12 @@ mod kruskal {
             if !uf.is_connect(s, t) {
                 uf.connect(s, t);
                 res.push((s, t));
+
+                // 連結になったら打ち切る
+                if uf.size(s) == N {
+                    break;
+                }
             }
-            // TODO: 連結になったら打ち切る
         }
 
         res
