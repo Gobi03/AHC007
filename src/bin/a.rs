@@ -152,7 +152,7 @@ fn main() {
             let (u, v) = input.uv[mi];
             let di = input.xy[u].specific_distance(&input.xy[v]);
             // TODO: 良き範囲に変更
-            let estimated_cost = rng.gen_range(1.0, 3.0) * di as f64;
+            let estimated_cost = rng.gen_range(1.13, 2.87) * di as f64;
 
             edges.push((MinNonNan(estimated_cost), (u, v)));
         }
