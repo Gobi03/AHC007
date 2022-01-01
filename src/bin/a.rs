@@ -123,23 +123,8 @@ fn main() {
     let mut rng = thread_rng();
 
     // input
-    let (r, w) = (std::io::stdin(), std::io::stdout());
-    let mut sc = IO::new(r.lock(), w.lock());
 
-    let mut xy = Vec::with_capacity(N);
-    let mut uv = Vec::with_capacity(M);
-    for _ in 0..N {
-        let x: usize = sc.read();
-        let y: usize = sc.read();
-        xy.push(Coord::from_usize_pair((x, y)));
-    }
-    for _ in 0..M {
-        let u: usize = sc.read();
-        let v: usize = sc.read();
-        uv.push((u, v));
-    }
-
-    let mut input = read_file("/Users/tatsuya/atcoder-rust/ahc007/tools/in/0000.txt".to_string());
+    let mut input = read_file("/workspace/tools/in/0000.txt".to_string());
 
     // main
     let mut uf = kruskal::UnionFind::new(N);
@@ -170,13 +155,14 @@ fn main() {
             }
         }
 
+        let (u, v) = input.uv[mi];
+
         // エッジmiのコスト
-        let l: usize = sc.read();
+        let di = input.xy[u].specific_distance(&input.xy[v]);
+        let l: usize = 2 * di;
         input.l.push(l);
 
         let lc = MinNonNan(l as f64);
-
-        let (u, v) = input.uv[mi];
 
         // 各世界線での多数決
         let mut agree_cnt = 0;
