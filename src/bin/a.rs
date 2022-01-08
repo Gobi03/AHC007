@@ -124,8 +124,7 @@ fn main() {
     let mut rng = thread_rng();
 
     // input
-
-    let mut input = read_file("/workspace/tools/in/0000.txt".to_string());
+    let (mut input, ls) = read_file("./tools/in/0000.txt".to_string());
 
     // main
     let mut uf = kruskal::UnionFind::new(N);
@@ -148,6 +147,7 @@ fn main() {
     }
 
     // main loop
+    let mut score = 0;
     for mi in 0..M {
         // すでに連結な辺を間引く
         if mi % 100 == 0 {
@@ -160,7 +160,7 @@ fn main() {
 
         // エッジmiのコスト
         let di = input.xy[u].specific_distance(&input.xy[v]);
-        let l: usize = 2 * di;
+        let l: usize = ls[mi];
         input.l.push(l);
 
         let lc = MinNonNan(l as f64);
@@ -193,9 +193,7 @@ fn main() {
 
         if agree_cnt >= AGREE_LINE {
             uf.connect(u, v);
-            println!("1");
-        } else {
-            println!("0");
+            score += l;
         }
 
         for edges in &mut worlds {
@@ -204,6 +202,7 @@ fn main() {
     }
 
     eprintln!("{}ms", system_time.elapsed().unwrap().as_millis());
+    println!("cost: {}", score);
 }
 
 #[derive(PartialEq, Clone, Copy)]
@@ -342,7 +341,7 @@ impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
 }
 
 #[allow(dead_code, unused)]
-fn read_file(file_path: String) -> Input {
+fn read_file(file_path: String) -> (Input, Vec<usize>) {
     use std::fs::File;
     use std::io::prelude::*;
     use std::io::BufReader;
@@ -379,5 +378,11 @@ fn read_file(file_path: String) -> Input {
         uv.push(pp);
     }
 
-    Input::new(xy, uv)
+    let mut ls = vec![];
+    for i in N + M..(N + M) + M {
+        let l = v[i].parse::<usize>().unwrap();
+        ls.push(l);
+    }
+
+    (Input::new(xy, uv), ls)
 }

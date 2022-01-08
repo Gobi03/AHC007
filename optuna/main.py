@@ -11,23 +11,24 @@ def objective(trial):
     test_num = '0000'
     command = f'../target/release/a'
     s = pwn.process(command)
-    s.read(f'tools/in/{test_num}.txt')
 
     print("hoge")
 
-    l = s.recvline().decode()[:-1]
 
-    print("fuga")
+    while True:
+        l = s.recvline().decode()[:-1]
+        print(l)
+        if l.startswith("cost: "):
+            s.close()
+            return int(l[5:])
 
-    # score = float(s.recvline().decode()[:-1])/test_num*50
-    s.close()
-    
-    return score
+# main
+os.system("cargo build --release")
 
 study = optuna.create_study(
     study_name="ahc007",
     storage="sqlite:///db.sqlite3",
     load_if_exists=True,
-    direction="maximize")
+    direction="minimize")
 
-study.optimize(objective, n_trials=100)
+study.optimize(objective, n_trials=10)
