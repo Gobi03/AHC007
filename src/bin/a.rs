@@ -119,7 +119,7 @@ impl Input {
 }
 
 fn main() {
-    let agree_line: usize = std::env::var("AGREE_LINE")
+    let adopt_line: usize = std::env::var("ADOPT_LINE")
         .unwrap()
         .parse::<usize>()
         .unwrap();
@@ -194,7 +194,7 @@ fn main() {
             }
         }
 
-        if agree_cnt >= agree_line {
+        if agree_cnt >= adopt_line {
             uf.connect(u, v);
             score += l;
         }
