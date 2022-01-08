@@ -10,10 +10,7 @@ def objective(trial):
 
     test_num = '0000'
     command = f'../target/release/a'
-    s = pwn.process(command)
-
-    print("hoge")
-
+    s = pwn.process(command, env={'AGREE_LINE': str(agree_line)})
 
     while True:
         l = s.recvline().decode()[:-1]
@@ -31,4 +28,4 @@ study = optuna.create_study(
     load_if_exists=True,
     direction="minimize")
 
-study.optimize(objective, n_trials=10)
+study.optimize(objective, n_trials=100)
