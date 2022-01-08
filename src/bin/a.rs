@@ -25,6 +25,7 @@ const M: usize = 1995;
 const SIDE: usize = 800;
 
 const WORLD_NUM: usize = 47;
+const AGREE_LINE: usize = WORLD_NUM / 2 + 1;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct Coord {
@@ -190,7 +191,7 @@ fn main() {
             }
         }
 
-        if agree_cnt > WORLD_NUM / 2 {
+        if agree_cnt >= AGREE_LINE {
             uf.connect(u, v);
             println!("1");
         } else {
