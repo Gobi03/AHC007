@@ -128,7 +128,23 @@ fn main() {
     let mut rng = thread_rng();
 
     // input
-    let (mut input, ls) = read_file("./tools/in/0000.txt".to_string());
+    let (r, w) = (std::io::stdin(), std::io::stdout());
+    let mut sc = IO::new(r.lock(), w.lock());
+
+    let mut xy = Vec::with_capacity(N);
+    let mut uv = Vec::with_capacity(M);
+    for _ in 0..N {
+        let x: usize = sc.read();
+        let y: usize = sc.read();
+        xy.push(Coord::from_usize_pair((x, y)));
+    }
+    for _ in 0..M {
+        let u: usize = sc.read();
+        let v: usize = sc.read();
+        uv.push((u, v));
+    }
+
+    let mut input = Input::new(xy, uv);
 
     // main
     let mut uf = kruskal::UnionFind::new(N);
@@ -341,51 +357,4 @@ impl<R: std::io::Read, W: std::io::Write> IO<R, W> {
     pub fn chars(&mut self) -> Vec<char> {
         self.read::<String>().chars().collect()
     }
-}
-
-#[allow(dead_code, unused)]
-fn read_file(file_path: String) -> (Input, Vec<usize>) {
-    use std::fs::File;
-    use std::io::prelude::*;
-    use std::io::BufReader;
-
-    let file = File::open(file_path).unwrap();
-    let mut buf_reader = BufReader::new(file);
-    // ここにファイル内容を書き込む
-    let mut contents = String::new();
-    buf_reader.read_to_string(&mut contents);
-
-    // contents をパースして、入力を作れ
-    let v = contents.split("\n").collect::<Vec<_>>();
-    let mut xy = vec![];
-    for i in 0..N {
-        let p = v[i]
-            .split(" ")
-            .collect::<Vec<_>>()
-            .iter()
-            .map(|e| e.parse::<usize>().unwrap())
-            .collect::<Vec<_>>();
-        let pos = Coord::from_usize_pair((p[0], p[1]));
-
-        xy.push(pos);
-    }
-
-    let mut uv = vec![];
-    for i in N..N + M {
-        let p = v[i].split(" ").collect::<Vec<_>>();
-        let pp = (
-            p[0].parse::<usize>().unwrap(),
-            p[1].parse::<usize>().unwrap(),
-        );
-
-        uv.push(pp);
-    }
-
-    let mut ls = vec![];
-    for i in N + M..(N + M) + M {
-        let l = v[i].parse::<usize>().unwrap();
-        ls.push(l);
-    }
-
-    (Input::new(xy, uv), ls)
 }
