@@ -28,4 +28,6 @@ study = optuna.create_study(
     load_if_exists=True,
     direction="minimize")
 
-study.optimize(objective, n_trials=100)
+study.optimize(objective, n_trials=1)
+
+print(f"\nbest_params: {study.best_params}, best_value: {study.best_value}")

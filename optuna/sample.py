@@ -1,5 +1,4 @@
 import optuna
-import pwn
 
 def objective(trial):
     x = trial.suggest_float("x", -10, 10)
