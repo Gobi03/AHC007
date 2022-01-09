@@ -179,7 +179,7 @@ fn main() {
         let (u, v) = input.uv[mi];
 
         // エッジmiのコスト
-        let l: usize = ls[mi];
+        let l: usize = sc.read();
         input.l.push(l);
 
         let lc = MinNonNan(l as f64);
